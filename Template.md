@@ -124,3 +124,114 @@ template <>
 class test<int, int, double> {};
 //B까지 int일 경우 특수한경우의 구현
 ```
+
+
+
+## 함수템플릿
+
+클래스말고 함수도 템플릿을 쓸 수 있다.
+
+```cpp
+template <typename T>
+T max(T& a, T& b) {
+  return a > b ? a : b;
+}
+```
+
+```cpp
+max<int>(a, b)
+```
+
+이런식으로 쓰지 않고
+
+```cpp
+max(a, b)
+```
+
+이런식으로 쓴다.컴파일러가 알아서 변환을 해준다.
+
+## 함수객체의 도입
+
+comparator가 나온 배경이다.
+
+```cpp
+template <typename Cont, typename Comp>
+
+void bubble_sort(Cont& cont, Comp& comp) {
+  for (int i = 0; i < cont.size(); i++) {
+    for (int j = i + 1; j < cont.size(); j++) {
+      if (!comp(cont[i], cont[j])) {
+        cont.swap(i, j);
+      }
+    }
+  }
+}
+```
+
+이것은 comp의 구현에 따라서 오름차순 정렬/내림차순 정렬을 할 수있다. 
+
+다만 comp는 함수가아니다.. 함수형프로그래밍이라면 함수를 넘길지도 모르지만.
+
+comp함수역할을 하는 class comp에다가 `()` 연산자를 오버로딩 한것이다.
+
+
+
+```cpp
+struct Comp1 {
+  bool operator()(int a, int b) { return a > b; }
+};
+
+struct Comp2 {
+  bool operator()(int a, int b) { return a < b; }
+};
+```
+
+이렇게 해서 comp자리에 comp1,2들을 넣어주면 되겠다.
+
+이렇게 함수가 아니지만 함수처럼 사용되는 애들을 함수객체라고 한다.
+
+**Functor**
+
+> 자바는 사실 이렇게 하지 않는다. 뭐 공통점도 있지만 다른점도 있단거겠다.
+>
+> 자바는 ㄹㅇ 극단적인 객체지향언어라서 저런 이상한거 허용안한다
+>
+> 그냥 comparator 객체를 요구를 한다.
+>
+> 그리고 그 객체가 myComparator.compare(x,y)를 실행해서 한다.
+
+
+
+### 타입이 아닌 템플릿 인자 (non-type template arguments)
+
+```cpp
+template <typename T, int num>
+T add_num(T t) {
+  return t + num;
+}//템플릿
+```
+
+```cpp
+add_num<int, 5>(x)//구현
+```
+
+```cpp
+int add_num(int t) { return t + 5; }//컴파일러가 써주는 코드
+```
+
+이건 어따 쓸까?예를 들자면 [std::array](https://modoocode.com/314)가 쓴다.얘는 배열은 배열인데, c와는 다르게 배열의 크기를 함께 저장하는 배열이다(배열은 주소를 넘겨주므로 좀 에바칠때가 많았다).
+
+```cpp
+  std::array<int, 5> arr = {1, 2, 3, 4, 5};
+```
+
+주의할점은 
+
+```
+  std::array<int, 5>
+```
+
+자체가 하나의 타입이란 것이다.따라서 저걸 인자로 받는 함수를 만들면 크기가 5일 때밖에 쓸 수 없다. 그러면 손으로 나머지 사이즈들 다 만드는 건 말도 안되고 거기서도 역시 템플릿을 받는 함수를 대신 써주자.
+
+참고로 템플릿인자들은 (타입이든 아니든) 디폴트값을 써줄 수 있다.
+
